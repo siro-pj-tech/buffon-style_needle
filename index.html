@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ビュフォン”風”の針 ～魔改造して気合でπを作り出せ！～ v1.1 PC対応</title>
+    <style>
+        :root {
+            --bg-color: #060911;
+            --panel-bg: #111827;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --gold-color: #fbbf24;
+            --green-color: #34d399;
+            --pink-color: #f472b6;
+            --text-color: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, #0f172a 0%, #060911 75%);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* モバイル基準（1カラム縦積み） */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 440px;
+            min-height: 100dvh;
+            background: var(--panel-bg);
+            padding: 8px 10px 10px;
+            gap: 6px;
+            border-left: 1px solid #1e293b;
+            border-right: 1px solid #1e293b;
+        }
+
+        /* 1. ヘッダー */
+        .header-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .game-title {
+            font-size: 13.5px;
+            font-weight: 800;
+            line-height: 1.25;
+            background: linear-gradient(90deg, #38bdf8, #f472b6, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            word-break: keep-all;
+        }
+
+        .header-sub-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-badge {
+            font-size: 11px;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+
+        .icon-btn:hover {
+            border-color: #64748b;
+            background: #273549;
+        }
+
+        .icon-btn:active { transform: scale(0.95); }
+
+        #sound-btn.off {
+            color: #64748b;
+            border-color: #1e293b;
+        }
+
+        #help-btn {
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+
+        /* 2. 2段構成ステータスHUD */
+        .hud-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #0f172a;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        .hud-row-top {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hud-score { text-align: left; }
+
+        .hud-timer {
+            text-align: center;
+            background: #1e293b;
+            padding: 3px 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        .hud-high { text-align: right; }
+
+        .hud-row-bottom {
+            display: flex;
+            justify-content: flex-end;
+            align-items: baseline;
+            gap: 14px;
+            border-top: 1px solid #1e293b;
+            padding-top: 4px;
+        }
+
+        .hud-label {
+            font-size: 9.5px;
+            color: #94a3b8;
+            display: block;
+            letter-spacing: 0.03em;
+        }
+
+        .hud-val-score {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--green-color);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hud-val-timer {
+            font-size: 21px;
+            font-weight: 900;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hud-val-high {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gold-color);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hud-sub-item {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .hud-sub-label {
+            font-size: 10.5px;
+            color: #94a3b8;
+        }
+
+        .hud-sub-val {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-color);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* 3. シンプルメーター */
+        .pi-meter-container {
+            background: #0f172a;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .pi-meter-container.fever {
+            border-color: var(--green-color);
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.25);
+        }
+
+        .pi-meter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .meter-side-left { color: #f87171; }
+        .meter-center-mult {
+            color: var(--pink-color);
+            font-size: 13px;
+            font-weight: 900;
+        }
+        .meter-side-right { color: #60a5fa; }
+
+        .pi-meter-bar {
+            position: relative;
+            width: 100%;
+            height: 9px;
+            background: linear-gradient(90deg, #ef4444 0%, #eab308 32%, #10b981 46%, #10b981 54%, #eab308 68%, #3b82f6 100%);
+            border-radius: 5px;
+        }
+
+        .pi-sweet-spot {
+            position: absolute;
+            left: 44%;
+            width: 12%;
+            top: -2px;
+            bottom: -2px;
+            border: 1.5px solid #ffffff;
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 3px;
+        }
+
+        .pi-target-mark {
+            position: absolute;
+            left: 50%;
+            top: -3px;
+            bottom: -3px;
+            width: 2px;
+            background: #ffffff;
+            transform: translateX(-50%);
+        }
+
+        #pi-cursor {
+            position: absolute;
+            left: 50%;
+            top: -4px;
+            width: 10px;
+            height: 17px;
+            background: #fbbf24;
+            border: 2px solid #090d16;
+            border-radius: 4px;
+            transform: translateX(-50%);
+            transition: left 0.18s ease-out;
+        }
+
+        /* 4. 縦長ゲームキャンバス領域 */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 375px;
+        }
+
+        canvas#canvas {
+            background-color: #03050a;
+            border-radius: 8px;
+            border-top: 1px solid #1e293b;
+            border-bottom: 1px solid #1e293b;
+            border-left: 2px solid #334155;
+            border-right: 2px solid #334155;
+            cursor: crosshair;
+            width: 100%;
+            height: 100%;
+            max-height: 500px;
+            display: block;
+            touch-action: none;
+        }
+
+        canvas#confetti-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 8px;
+        }
+
+        /* オーバーレイ・HELPモーダル */
+        #overlay, #help-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(9, 13, 22, 0.92);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+
+        #overlay.hidden, #help-modal.hidden { display: none; }
+
+        #overlay h2 {
+            margin: 0;
+            font-size: 17px;
+            background: linear-gradient(90deg, #38bdf8, #f472b6, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #overlay p {
+            margin: 0;
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+
+        .mode-selector-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s ease;
+            color: #cbd5e1;
+        }
+
+        .mode-card:hover {
+            border-color: #64748b;
+        }
+
+        .mode-card.selected {
+            border-color: var(--green-color);
+            background: rgba(16, 185, 129, 0.14);
+        }
+
+        .mode-card-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffffff;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .mode-card.selected .mode-card-title { color: var(--green-color); }
+
+        .mode-card-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            display: block;
+        }
+
+        .result-detail {
+            background: var(--card-bg);
+            border: 1px solid var(--green-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .new-record-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #090d16;
+            font-weight: 900;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 6px;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+            animation: badgePulse 0.8s infinite alternate;
+        }
+
+        @keyframes badgePulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.08); }
+        }
+
+        /* 5. 連射レベルバー ＋ レバー連動スライダーSHOOT操作パネル */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .rapid-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 4px 8px;
+        }
+
+        .rapid-step-btn {
+            width: 44px;
+            height: 28px;
+            background: var(--card-bg);
+            color: var(--accent-color);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s ease, transform 0.06s ease;
+        }
+
+        .rapid-step-btn:hover {
+            background: #273549;
+        }
+
+        .rapid-step-btn:active {
+            background: #2563eb;
+            color: #ffffff;
+            transform: scale(0.94);
+        }
+
+        .rapid-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #e2e8f0;
+        }
+
+        .rapid-level-badge {
+            background: #1e293b;
+            color: var(--gold-color);
+            border: 1px solid var(--gold-color);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12.5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .slider-track {
+            position: relative;
+            width: 100%;
+            height: 68px;
+            background: linear-gradient(180deg, #0b1120 0%, #1e293b 50%, #0b1120 100%);
+            border: 2px solid #334155;
+            border-radius: 14px;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.85);
+            touch-action: none;
+            cursor: grab;
+            overflow: hidden;
+        }
+
+        .slider-track:active, .slider-track.holding {
+            cursor: grabbing;
+            border-color: #60a5fa;
+        }
+
+        .slider-groove {
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            top: 50%;
+            height: 10px;
+            transform: translateY(-50%);
+            background: #04070f;
+            border-radius: 5px;
+            border: 1px solid #334155;
+            pointer-events: none;
+        }
+
+        .slider-base-plate {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            width: 112px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(56, 189, 248, 0.14);
+            border: 1.5px solid rgba(56, 189, 248, 0.5);
+            border-radius: 12px;
+            pointer-events: none;
+            transition: background 0.1s ease;
+        }
+
+        .slider-track.holding .slider-base-plate {
+            background: rgba(244, 114, 182, 0.25);
+            border-color: #f472b6;
+        }
+
+        #shoot-knob {
+            position: absolute;
+            top: 7px;
+            bottom: 7px;
+            width: 96px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border: 2px solid #93c5fd;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+            transition: transform 0.05s ease, box-shadow 0.1s ease;
+        }
+
+        .slider-track.holding #shoot-knob {
+            background: linear-gradient(135deg, #db2777, #7c3aed);
+            border-color: #fbcfe8;
+            box-shadow: 0 2px 18px rgba(244, 114, 182, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.45);
+        }
+
+        .slider-caption {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+        }
+
+        .pc-key-hints {
+            display: none;
+        }
+
+        #start-btn, #close-help-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            border: none;
+            padding: 13px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+        }
+
+        #start-btn:hover:not(:disabled), #close-help-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        #start-btn:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #start-btn:not(:disabled):active { transform: scale(0.96); }
+
+        /* HELP図解 */
+        .help-diagram-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 5px;
+            width: 100%;
+        }
+
+        .help-text-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+            text-align: left;
+            font-size: 11px;
+        }
+
+        .help-item {
+            background: var(--card-bg);
+            padding: 6px 9px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            line-height: 1.35;
+        }
+
+        .formula-pill {
+            display: inline-block;
+            background: #0f172a;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-weight: bold;
+        }
+
+        /* =========================================================
+           PC・タブレット横画面対応（1024x768 以上の大画面2カラムレイアウト）
+           ========================================================= */
+        @media (min-width: 780px) {
+            body {
+                padding: 16px;
+            }
+
+            #game-container {
+                display: grid;
+                grid-template-columns: minmax(420px, 518px) minmax(360px, 430px);
+                grid-template-rows: auto auto auto 1fr;
+                grid-template-areas:
+                    "canvas header"
+                    "canvas hud"
+                    "canvas meter"
+                    "canvas controls";
+                max-width: 1000px;
+                width: 100%;
+                min-height: 700px;
+                height: min(740px, calc(100dvh - 32px));
+                border-radius: 18px;
+                border: 1px solid #334155;
+                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(56, 189, 248, 0.15);
+                padding: 18px 20px;
+                column-gap: 20px;
+                row-gap: 12px;
+            }
+
+            .canvas-wrapper {
+                grid-area: canvas;
+                height: 100%;
+                min-height: 0;
+                aspect-ratio: 400 / 540;
+                margin: 0 auto;
+            }
+
+            canvas#canvas,
+            canvas#confetti-canvas {
+                max-height: 100%;
+                height: 100%;
+                width: 100%;
+                border-radius: 12px;
+                box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+            }
+
+            #overlay, #help-modal {
+                border-radius: 12px;
+                padding: 24px;
+                gap: 14px;
+            }
+
+            #overlay h2 {
+                font-size: 21px;
+            }
+
+            #overlay p {
+                font-size: 13.5px;
+            }
+
+            .mode-card {
+                padding: 12px 14px;
+            }
+
+            .mode-card-title {
+                font-size: 14.5px;
+            }
+
+            .mode-card-desc {
+                font-size: 12px;
+            }
+
+            .header-block {
+                grid-area: header;
+                gap: 8px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid #1e293b;
+            }
+
+            .game-title {
+                font-size: 17px;
+                line-height: 1.35;
+                word-break: normal;
+            }
+
+            .mode-badge {
+                font-size: 12.5px;
+            }
+
+            .icon-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .hud-grid {
+                grid-area: hud;
+                padding: 12px 14px;
+                gap: 10px;
+                border-radius: 12px;
+            }
+
+            .hud-label {
+                font-size: 11px;
+            }
+
+            .hud-val-score {
+                font-size: 26px;
+            }
+
+            .hud-val-timer {
+                font-size: 28px;
+            }
+
+            .hud-val-high {
+                font-size: 19px;
+            }
+
+            .hud-sub-label {
+                font-size: 12px;
+            }
+
+            .hud-sub-val {
+                font-size: 17px;
+            }
+
+            .pi-meter-container {
+                grid-area: meter;
+                padding: 10px 14px;
+                border-radius: 12px;
+            }
+
+            .pi-meter-header {
+                font-size: 12.5px;
+                margin-bottom: 8px;
+            }
+
+            .meter-center-mult {
+                font-size: 16px;
+            }
+
+            .pi-meter-bar {
+                height: 12px;
+            }
+
+            #pi-cursor {
+                width: 12px;
+                height: 20px;
+            }
+
+            .controls-panel {
+                grid-area: controls;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            .rapid-bar {
+                padding: 8px 12px;
+                border-radius: 10px;
+            }
+
+            .rapid-step-btn {
+                width: 52px;
+                height: 34px;
+                font-size: 16px;
+            }
+
+            .rapid-display {
+                font-size: 13.5px;
+            }
+
+            .rapid-level-badge {
+                font-size: 14px;
+                padding: 3px 12px;
+            }
+
+            .slider-track {
+                height: 78px;
+            }
+
+            .slider-caption {
+                font-size: 12px;
+            }
+
+            .pc-key-hints {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                background: #0f172a;
+                border: 1px solid #1e293b;
+                border-radius: 8px;
+                padding: 8px 10px;
+                font-size: 11.5px;
+                color: #94a3b8;
+            }
+
+            .kbd {
+                background: #1e293b;
+                border: 1px solid #475569;
+                border-bottom-width: 2px;
+                border-radius: 4px;
+                padding: 1px 6px;
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 11px;
+                font-weight: bold;
+                color: #e2e8f0;
+            }
+
+            .help-text-list {
+                font-size: 12px;
+                gap: 8px;
+            }
+
+            .help-item {
+                padding: 9px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 1. ヘッダー -->
+    <div class="header-block">
+        <div class="game-title">ビュフォン”風”の針 ～魔改造して気合でπを作り出せ！～</div>
+        <div class="header-sub-row">
+            <span class="mode-badge" id="current-mode-badge">⏱ 30秒スコアアタック</span>
+            <div class="header-actions">
+                <button class="icon-btn" id="sound-btn" onclick="toggleSound()">🔊 ON</button>
+                <button class="icon-btn" id="help-btn" onclick="openHelp()">？ HELP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 2段構成ステータスHUD -->
+    <div class="hud-grid">
+        <div class="hud-row-top">
+            <div class="hud-score">
+                <span class="hud-label">SCORE</span>
+                <span id="score-val" class="hud-val-score">0</span>
+            </div>
+            <div class="hud-timer">
+                <span class="hud-label" id="timer-label">TIME</span>
+                <span id="timer-val" class="hud-val-timer">30.0</span>
+            </div>
+            <div class="hud-high">
+                <span class="hud-label" id="high-label">HIGH SCORE</span>
+                <span id="high-val" class="hud-val-high">0</span>
+            </div>
+        </div>
+        <div class="hud-row-bottom">
+            <div class="hud-sub-item">
+                <span class="hud-sub-label">交差:</span>
+                <span class="hud-sub-val"><span id="hit-count">0</span>/<span id="total-count">0</span></span>
+            </div>
+            <div class="hud-sub-item">
+                <span class="hud-sub-label">推定π:</span>
+                <span id="pi-val" class="hud-sub-val">0.0000</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. シンプルメーター -->
+    <div class="pi-meter-container" id="pi-meter-box">
+        <div class="pi-meter-header">
+            <span class="meter-side-left">◀当てすぎ</span>
+            <span class="meter-center-mult" id="mult-val">×1.0</span>
+            <span class="meter-side-right">外しすぎ▶</span>
+        </div>
+        <div class="pi-meter-bar">
+            <div class="pi-sweet-spot"></div>
+            <div class="pi-target-mark"></div>
+            <div id="pi-cursor"></div>
+        </div>
+    </div>
+
+    <!-- 4. 縦長ゲームキャンバス（400x540 論理解像度・PCでは高精細大画面拡大） -->
+    <div class="canvas-wrapper">
+        <canvas id="canvas" width="400" height="540"></canvas>
+        <canvas id="confetti-canvas" width="400" height="540"></canvas>
+        
+        <!-- スタート＆リザルト画面 -->
+        <div id="overlay">
+            <h2 id="overlay-title">ビュフォン”風”の針 ～魔改造版～</h2>
+            <p id="overlay-desc">
+                <b>SHOOTレバー</b> または <b>SPACEキー</b> で狙いを定めて発射！<br>
+                交差率を調整して推定πを <b>3.14159</b> に近づけよう！
+            </p>
+            
+            <div id="result-box" class="result-detail" style="display:none;"></div>
+
+            <div class="mode-selector-grid">
+                <button type="button" class="mode-card selected" id="card-time" onclick="selectMode('time')">
+                    <span class="mode-card-title">⏱ 30秒スコアアタック</span>
+                    <span class="mode-card-desc">πを3.14付近に保って倍率アップ！壁反射ヒットはボーナス加点</span>
+                </button>
+                <button type="button" class="mode-card" id="card-pi" onclick="selectMode('pi')">
+                    <span class="mode-card-title">🎯 π (3.14159) 最速近似</span>
+                    <span class="mode-card-desc">5投以上で推定πを 3.1416 (±0.04) に合わせるタイム競争</span>
+                </button>
+            </div>
+
+            <button id="start-btn" onclick="startGame()">GAME START</button>
+        </div>
+
+        <!-- 図解HELPモーダル（ビュフォンの針の確率原理とスコア倍率解説） -->
+        <div id="help-modal" class="hidden">
+            <h2 style="margin:0; font-size:15.5px; color:#38bdf8;">📐 攻略図解：「ビュフォンの針」とスコア倍率の仕組み</h2>
+            <div class="help-diagram-box">
+                <canvas id="help-canvas" width="360" height="136"></canvas>
+            </div>
+            <div class="help-text-list">
+                <div class="help-item">
+                    <b style="color:#34d399;">① 角度と交差判定（ビュフォンの針の原理）</b><br>
+                    平行線（間隔 <span class="formula-pill">d</span>）に長さ <span class="formula-pill">L</span> の針を投げると、交差確率から <span class="formula-pill">π ≈ 2L×総投数 ÷ (d×交差数)</span> が導かれます。本ゲームではラインに対して<b>深い角度（垂直に近い）で当てると交差HIT</b>になります！
+                </div>
+                <div class="help-item">
+                    <b style="color:#fbbf24;">② 当てすぎたら「あえてMISS」で3.14へ調整！</b><br>
+                    連続HITしすぎると推定πが <b>3.14 より小さく（左へズレ）</b>なり倍率が下がります。ラインに対して<b>浅い角度（平行に近い）で撃つとMISSとして計測</b>され、推定πを右へ戻して倍率 <b style="color:#f472b6;">×2.0〜×3.0</b> を維持できます！
+                </div>
+            </div>
+            <button id="close-help-btn" onclick="closeHelp()">閉じる (ゲームに戻る)</button>
+        </div>
+    </div>
+
+    <!-- 5. 連射レベル(0〜10) ＋ レバー連動スライダーSHOOT操作パネル -->
+    <div class="controls-panel">
+        <div class="rapid-bar">
+            <button type="button" class="rapid-step-btn" id="rapid-minus" onclick="changeRapidLevel(-1)">◀</button>
+            <div class="rapid-display">
+                <span>連射レベル</span>
+                <span class="rapid-level-badge" id="rapid-val">Lv.0 (単発)</span>
+            </div>
+            <button type="button" class="rapid-step-btn" id="rapid-plus" onclick="changeRapidLevel(1)">▶</button>
+        </div>
+
+        <div class="slider-track" id="slider-track">
+            <div class="slider-groove"></div>
+            <div class="slider-base-plate" id="slider-base-plate"></div>
+            <div id="shoot-knob">SHOOT</div>
+        </div>
+
+        <div class="slider-caption">◀ スライド移動 / 押している間は移動・離して発射（SPACE共通） ▶</div>
+
+        <div class="pc-key-hints">
+            <span><span class="kbd">←</span><span class="kbd">→</span> / <span class="kbd">A</span><span class="kbd">D</span> 移動</span>
+            <span><span class="kbd">SPACE</span> 発射 / 連射</span>
+            <span><span class="kbd">↑</span><span class="kbd">↓</span> 連射Lv調整</span>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const confettiCanvas = document.getElementById('confetti-canvas');
+const cCtx = confettiCanvas.getContext('2d');
+
+const timerLabel = document.getElementById('timer-label');
+const timerEl = document.getElementById('timer-val');
+const totalEl = document.getElementById('total-count');
+const hitEl = document.getElementById('hit-count');
+const piEl = document.getElementById('pi-val');
+const multEl = document.getElementById('mult-val');
+const scoreEl = document.getElementById('score-val');
+const highLabel = document.getElementById('high-label');
+const highEl = document.getElementById('high-val');
+const piMeterBox = document.getElementById('pi-meter-box');
+const piCursor = document.getElementById('pi-cursor');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlayDesc = document.getElementById('overlay-desc');
+const resultBox = document.getElementById('result-box');
+const startBtn = document.getElementById('start-btn');
+const modeBadge = document.getElementById('current-mode-badge');
+const helpModal = document.getElementById('help-modal');
+const soundBtn = document.getElementById('sound-btn');
+
+const sliderTrack = document.getElementById('slider-track');
+const sliderBasePlate = document.getElementById('slider-base-plate');
+const shootKnob = document.getElementById('shoot-knob');
+const rapidValEl = document.getElementById('rapid-val');
+
+const NEEDLE_LENGTH = 68;
+const LINE_INTERVAL = 100;
+const LAUNCHER_Y = 492;
+const BASE_Y = 185;
+const WALL_MARGIN = 12;
+const TARGET_PI = Math.PI;
+const MAX_STUCK_NEEDLES = 10;
+
+let gameMode = 'time';
+let isPlaying = false;
+let isPaused = false;
+let inputLocked = false;
+let lockCountdownTimer = null;
+
+let time = 0;
+let lastFrameTime = 0;
+let gameTimer = 30.0;
+
+let totalCount = 0;
+let hitCount = 0;
+let combo = 0;
+let score = 0;
+let currentMultiplier = 1.0;
+let rainbowFlashTimer = 0;
+let leftWallFlash = 0;
+let rightWallFlash = 0;
+
+let rapidLevel = 0;
+let isSliderHolding = false;
+let isSpaceHolding = false;
+let activePointerId = null;
+let lastRapidShotTime = 0;
+
+const slashPopups = [];
+const stuckNeedles = [];
+const confettiPieces = [];
+let confettiSpawnTimer = 0;
+
+const STORAGE_KEY_TIME = 'buffon_ish_lever_time_v1';
+const STORAGE_KEY_PI = 'buffon_ish_lever_pi_v1';
+
+let lineOffsetY = 0;
+let lineAngle = 0;
+let pendulumAngle = -Math.PI / 2;
+
+let launcherX = canvas.width / 2;
+const launcherSpeed = 6.5;
+const keysPressed = {};
+
+const activeNeedles = [];
+const rockets = [];
+const particles = [];
+const floatingTexts = [];
+
+// ==========================================
+// BGM (Buffon's Needle Rush.mp3) & サウンド管理
+// ==========================================
+let soundEnabled = true;
+const bgmAudio = new Audio("Buffon's Needle Rush.mp3");
+bgmAudio.loop = true;
+bgmAudio.volume = 0.45;
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (soundEnabled && bgmAudio.paused) {
+        bgmAudio.play().catch(() => {});
+    }
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+        soundBtn.textContent = '🔊 ON';
+        soundBtn.classList.remove('off');
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        bgmAudio.play().catch(() => {});
+    } else {
+        soundBtn.textContent = '🔇 OFF';
+        soundBtn.classList.add('off');
+        bgmAudio.pause();
+    }
+}
+
+function playShootSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.09);
+    gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.09);
+}
+
+function playBounceSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(780, now);
+    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.07);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+}
+
+function playRocketSound(comboCount, mult) {
+    if (!soundEnabled || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const pitchBoost = Math.min(comboCount * 40 + (mult - 1) * 150, 500);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(340 + pitchBoost, now);
+    osc.frequency.exponentialRampToValueAtTime(1250 + pitchBoost, now + 0.26);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.26);
+}
+
+function playAdjustSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.06);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+}
+
+function playMissSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+function playBoomSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+}
+
+function playApplauseSound(isHighScore = false) {
+    if (!soundEnabled || !audioCtx) return;
+    const duration = isHighScore ? 3.4 : 2.0;
+    const sampleRate = audioCtx.sampleRate;
+    const bufferSize = Math.floor(sampleRate * duration);
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1);
+    }
+
+    const now = audioCtx.currentTime;
+
+    if (isHighScore) {
+        const fanfareNotes = [523.25, 659.25, 783.99, 1046.50];
+        fanfareNotes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            const startTime = now + idx * 0.09;
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.001, startTime);
+            gain.gain.linearRampToValueAtTime(0.16, startTime + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.85);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + 0.86);
+        });
+    }
+
+    const clapCount = isHighScore ? 42 : 20;
+    const maxSpread = isHighScore ? 2.4 : 1.3;
+    for (let c = 0; c < clapCount; c++) {
+        const offset = Math.random() * maxSpread;
+        const clapDuration = 0.04 + Math.random() * 0.035;
+
+        const src = audioCtx.createBufferSource();
+        src.buffer = noiseBuffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 850 + Math.random() * 1000;
+        filter.Q.value = 1.2;
+
+        const gain = audioCtx.createGain();
+        const basePeak = isHighScore ? 0.24 : 0.16;
+        const peak = basePeak * (1 - offset / (duration + 0.3));
+        gain.gain.setValueAtTime(0.001, now + offset);
+        gain.gain.linearRampToValueAtTime(peak, now + offset + 0.006);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + clapDuration);
+
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        src.start(now + offset);
+        src.stop(now + offset + clapDuration + 0.01);
+    }
+}
+
+// ==========================================
+// 花吹雪（紙吹雪）お祝いエフェクト
+// ==========================================
+function triggerConfettiCelebration() {
+    confettiPieces.length = 0;
+    confettiSpawnTimer = 150;
+    spawnConfettiBatch(85);
+}
+
+function spawnConfettiBatch(count) {
+    const palette = [
+        '#fbbf24',
+        '#f472b6',
+        '#fbcfe8',
+        '#38bdf8',
+        '#34d399',
+        '#a78bfa',
+        '#ffffff'
+    ];
+    for (let i = 0; i < count; i++) {
+        const isPetal = Math.random() < 0.45;
+        confettiPieces.push({
+            x: Math.random() * confettiCanvas.width,
+            y: -15 - Math.random() * 140,
+            vx: (Math.random() - 0.5) * 2.6,
+            vy: 1.5 + Math.random() * 2.4,
+            w: isPetal ? (7 + Math.random() * 4) : (6 + Math.random() * 5),
+            h: isPetal ? (10 + Math.random() * 4) : (4 + Math.random() * 4),
+            color: palette[Math.floor(Math.random() * palette.length)],
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.16,
+            swayPhase: Math.random() * Math.PI * 2,
+            swaySpeed: 0.04 + Math.random() * 0.05,
+            isPetal: isPetal,
+            alpha: 1.0
+        });
+    }
+}
+
+function updateAndDrawConfetti() {
+    cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+    if (confettiSpawnTimer > 0) {
+        confettiSpawnTimer--;
+        if (confettiSpawnTimer % 4 === 0) {
+            spawnConfettiBatch(4);
+        }
+    }
+
+    for (let i = confettiPieces.length - 1; i >= 0; i--) {
+        const cp = confettiPieces[i];
+        cp.swayPhase += cp.swaySpeed;
+        cp.x += cp.vx + Math.sin(cp.swayPhase) * 1.1;
+        cp.y += cp.vy;
+        cp.rotation += cp.rotSpeed;
+
+        if (cp.y > confettiCanvas.height - 60) {
+            cp.alpha -= 0.025;
+        }
+
+        if (cp.alpha <= 0 || cp.y > confettiCanvas.height + 20) {
+            confettiPieces.splice(i, 1);
+            continue;
+        }
+
+        cCtx.save();
+        cCtx.globalAlpha = Math.max(0, cp.alpha);
+        cCtx.translate(cp.x, cp.y);
+        cCtx.rotate(cp.rotation);
+        cCtx.scale(1, Math.cos(cp.swayPhase * 1.5) * 0.75 + 0.25);
+
+        cCtx.fillStyle = cp.color;
+        if (cp.isPetal) {
+            cCtx.beginPath();
+            cCtx.moveTo(0, -cp.h / 2);
+            cCtx.quadraticCurveTo(cp.w / 2, 0, 0, cp.h / 2);
+            cCtx.quadraticCurveTo(-cp.w / 2, 0, 0, -cp.h / 2);
+            cCtx.fill();
+        } else {
+            cCtx.fillRect(-cp.w / 2, -cp.h / 2, cp.w, cp.h);
+        }
+        cCtx.restore();
+    }
+}
+
+// ==========================================
+// 連射レベル（0〜10）制御
+// ==========================================
+function changeRapidLevel(delta) {
+    rapidLevel = Math.max(0, Math.min(10, rapidLevel + delta));
+    rapidValEl.textContent = rapidLevel === 0 ? 'Lv.0 (単発)' : `Lv.${rapidLevel}`;
+}
+
+function getRapidIntervalMs() {
+    if (rapidLevel <= 0) return Infinity;
+    return Math.max(90, 600 - rapidLevel * 51);
+}
+
+function isAnyShootHolding() {
+    return isSliderHolding || isSpaceHolding;
+}
+
+function updateHoldingVisual() {
+    if (isAnyShootHolding()) {
+        sliderTrack.classList.add('holding');
+    } else {
+        sliderTrack.classList.remove('holding');
+    }
+}
+
+// ==========================================
+// スライダー＆砲台の連動位置更新
+// ==========================================
+function syncLauncherAndSliderUI(ratio) {
+    const clampedRatio = Math.max(0, Math.min(1, ratio));
+    const minX = 26;
+    const maxX = canvas.width - 26;
+    launcherX = minX + clampedRatio * (maxX - minX);
+
+    const trackWidth = sliderTrack.clientWidth;
+    const knobWidth = shootKnob.offsetWidth || 96;
+    const baseWidth = sliderBasePlate.offsetWidth || 112;
+
+    const knobTravel = Math.max(0, trackWidth - knobWidth - 12);
+    const knobLeft = 6 + clampedRatio * knobTravel;
+    shootKnob.style.left = `${knobLeft}px`;
+    shootKnob.style.transform = 'none';
+
+    const baseTravel = Math.max(0, trackWidth - baseWidth - 8);
+    const baseLeft = 4 + clampedRatio * baseTravel;
+    sliderBasePlate.style.left = `${baseLeft}px`;
+    sliderBasePlate.style.transform = 'none';
+}
+
+function updateSliderFromClientX(clientX) {
+    const rect = sliderTrack.getBoundingClientRect();
+    const knobWidth = shootKnob.offsetWidth || 96;
+    const usableWidth = Math.max(1, rect.width - knobWidth);
+    const ratio = (clientX - rect.left - knobWidth / 2) / usableWidth;
+    syncLauncherAndSliderUI(ratio);
+}
+
+sliderTrack.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (inputLocked || !helpModal.classList.contains('hidden')) return;
+    initAudio();
+    if (!isAnyShootHolding()) {
+        lastRapidShotTime = performance.now();
+    }
+    isSliderHolding = true;
+    activePointerId = e.pointerId;
+    sliderTrack.setPointerCapture(e.pointerId);
+    updateHoldingVisual();
+    updateSliderFromClientX(e.clientX);
+});
+
+sliderTrack.addEventListener('pointermove', (e) => {
+    if (!isSliderHolding || e.pointerId !== activePointerId) return;
+    e.preventDefault();
+    updateSliderFromClientX(e.clientX);
+});
+
+function releaseSlider(e) {
+    if (!isSliderHolding || (e.pointerId !== undefined && e.pointerId !== activePointerId)) return;
+    isSliderHolding = false;
+    activePointerId = null;
+    updateHoldingVisual();
+
+    if (isPlaying && !isPaused && !inputLocked) {
+        shootNeedle();
+    }
+}
+
+sliderTrack.addEventListener('pointerup', releaseSlider);
+sliderTrack.addEventListener('pointercancel', releaseSlider);
+
+function updateHighScoreDisplay() {
+    if (gameMode === 'time') {
+        highLabel.textContent = 'HIGH SCORE';
+        const saved = localStorage.getItem(STORAGE_KEY_TIME) || 0;
+        highEl.textContent = Number(saved).toLocaleString();
+    } else {
+        highLabel.textContent = 'BEST TIME';
+        const saved = localStorage.getItem(STORAGE_KEY_PI);
+        highEl.textContent = saved ? `${Number(saved).toFixed(2)}s` : '--.--s';
+    }
+}
+
+function selectMode(mode) {
+    if (inputLocked) return;
+    gameMode = mode;
+    
+    document.getElementById('card-time').classList.toggle('selected', mode === 'time');
+    document.getElementById('card-pi').classList.toggle('selected', mode === 'pi');
+    
+    if (mode === 'time') {
+        modeBadge.textContent = '⏱ 30秒スコアアタック';
+        timerLabel.textContent = 'TIME';
+        timerEl.textContent = '30.0';
+    } else {
+        modeBadge.textContent = '🎯 π 最速近似チャレンジ';
+        timerLabel.textContent = 'TIME';
+        timerEl.textContent = '0.00';
+    }
+    
+    updateHighScoreDisplay();
+}
+
+function startGame() {
+    if (inputLocked) return;
+    initAudio();
+    isPlaying = true;
+    isPaused = false;
+    isSliderHolding = false;
+    isSpaceHolding = false;
+    updateHoldingVisual();
+    totalCount = 0;
+    hitCount = 0;
+    combo = 0;
+    score = 0;
+    currentMultiplier = 1.0;
+    rainbowFlashTimer = 0;
+    confettiPieces.length = 0;
+    confettiSpawnTimer = 0;
+    syncLauncherAndSliderUI(0.5);
+    
+    activeNeedles.length = 0;
+    stuckNeedles.length = 0;
+    rockets.length = 0;
+    particles.length = 0;
+    floatingTexts.length = 0;
+    slashPopups.length = 0;
+
+    gameTimer = (gameMode === 'time') ? 30.0 : 0.0;
+    lastFrameTime = performance.now();
+
+    totalEl.textContent = '0';
+    hitEl.textContent = '0';
+    piEl.textContent = '0.0000';
+    multEl.textContent = '×1.0';
+    scoreEl.textContent = '0';
+    timerEl.textContent = (gameMode === 'time') ? '30.0' : '0.00';
+    piCursor.style.left = '50%';
+    piMeterBox.classList.remove('fever');
+
+    overlay.classList.add('hidden');
+}
+
+function endGame(reasonTitle) {
+    if (!isPlaying) return;
+    isPlaying = false;
+    isSliderHolding = false;
+    isSpaceHolding = false;
+    updateHoldingVisual();
+    inputLocked = true;
+    startBtn.disabled = true;
+
+    activeNeedles.length = 0;
+
+    let isNewRecord = false;
+    const currentPi = hitCount > 0 ? (2 * NEEDLE_LENGTH * totalCount) / (LINE_INTERVAL * hitCount) : 0;
+    const piDiff = Math.abs(currentPi - TARGET_PI);
+
+    scoreEl.textContent = score.toLocaleString();
+    hitEl.textContent = hitCount;
+    totalEl.textContent = totalCount;
+    piEl.textContent = hitCount > 0 ? currentPi.toFixed(4) : '0.0000';
+
+    if (gameMode === 'time') {
+        const prevHigh = Number(localStorage.getItem(STORAGE_KEY_TIME) || 0);
+        if (score > prevHigh && score > 0) {
+            localStorage.setItem(STORAGE_KEY_TIME, score);
+            isNewRecord = true;
+        }
+        resultBox.innerHTML = `
+            <div>最終スコア: <b style="color:#34d399; font-size:20px;">${score.toLocaleString()} pts</b> ${isNewRecord ? '<span class="new-record-badge">👑 NEW RECORD!</span>' : ''}</div>
+            <div style="margin-top:4px;">交差: <b>${hitCount}/${totalCount}本</b> (推定π: <b>${hitCount > 0 ? currentPi.toFixed(4) : '0.0000'}</b>)</div>
+        `;
+    } else {
+        const prevBest = localStorage.getItem(STORAGE_KEY_PI);
+        if (!prevBest || gameTimer < Number(prevBest)) {
+            localStorage.setItem(STORAGE_KEY_PI, gameTimer.toFixed(2));
+            isNewRecord = true;
+        }
+        resultBox.innerHTML = `
+            <div>クリアタイム: <b style="color:#fbbf24; font-size:20px;">${gameTimer.toFixed(2)} 秒</b> ${isNewRecord ? '<span class="new-record-badge">👑 BEST RECORD!</span>' : ''}</div>
+            <div style="margin-top:4px;">達成推定π: <b>${currentPi.toFixed(5)}</b> (誤差 ${piDiff.toFixed(5)})</div>
+        `;
+    }
+
+    playApplauseSound(isNewRecord);
+    if (isNewRecord) {
+        triggerConfettiCelebration();
+        overlayTitle.textContent = '🎉 HIGH SCORE 更新おめでとう！ 🎉';
+    } else {
+        overlayTitle.textContent = reasonTitle;
+    }
+
+    updateHighScoreDisplay();
+    overlayDesc.textContent = '連打誤操作防止ロック中...';
+    resultBox.style.display = 'block';
+    overlay.classList.remove('hidden');
+
+    let remainSec = 2;
+    startBtn.textContent = `結果表示中... (${remainSec}s)`;
+    if (lockCountdownTimer) clearInterval(lockCountdownTimer);
+
+    lockCountdownTimer = setInterval(() => {
+        remainSec--;
+        if (remainSec > 0) {
+            startBtn.textContent = `結果表示中... (${remainSec}s)`;
+        } else {
+            clearInterval(lockCountdownTimer);
+            inputLocked = false;
+            startBtn.disabled = false;
+            startBtn.textContent = 'RETRY / START';
+            overlayDesc.textContent = 'モードを選んで再挑戦しよう！';
+        }
+    }, 1000);
+}
+
+function openHelp() {
+    if (inputLocked) return;
+    isPaused = true;
+    isSliderHolding = false;
+    isSpaceHolding = false;
+    updateHoldingVisual();
+    helpModal.classList.remove('hidden');
+    drawHelpDiagram();
+}
+
+function closeHelp() {
+    helpModal.classList.add('hidden');
+    isPaused = false;
+    lastFrameTime = performance.now();
+}
+
+function drawHelpDiagram() {
+    const hCanvas = document.getElementById('help-canvas');
+    const hCtx = hCanvas.getContext('2d');
+    hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+
+    // 左カード：深い角度（交差HIT）
+    hCtx.fillStyle = '#1e293b';
+    hCtx.fillRect(6, 6, 170, 124);
+    hCtx.strokeStyle = '#34d399';
+    hCtx.lineWidth = 1.5;
+    hCtx.strokeRect(6, 6, 170, 124);
+
+    hCtx.fillStyle = '#34d399';
+    hCtx.font = 'bold 11px sans-serif';
+    hCtx.fillText('◎ 深い角度 ＝ 交差HIT！', 14, 24);
+
+    hCtx.strokeStyle = '#38bdf8';
+    hCtx.lineWidth = 2.5;
+    hCtx.beginPath();
+    hCtx.moveTo(18, 66);
+    hCtx.lineTo(164, 66);
+    hCtx.stroke();
+
+    hCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    hCtx.setLineDash([3, 3]);
+    hCtx.beginPath();
+    hCtx.moveTo(18, 102);
+    hCtx.lineTo(164, 102);
+    hCtx.stroke();
+    hCtx.setLineDash([]);
+
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 4;
+    hCtx.beginPath();
+    hCtx.moveTo(82, 92);
+    hCtx.lineTo(98, 40);
+    hCtx.stroke();
+
+    hCtx.fillStyle = '#34d399';
+    hCtx.beginPath();
+    hCtx.arc(90, 66, 4.5, 0, Math.PI * 2);
+    hCtx.fill();
+
+    hCtx.fillStyle = '#e2e8f0';
+    hCtx.font = '10px sans-serif';
+    hCtx.fillText('交差数 H が増える（πが下がる）', 14, 121);
+
+    // 右カード：浅い角度（MISSとして計測）
+    hCtx.fillStyle = '#1e293b';
+    hCtx.fillRect(184, 6, 170, 124);
+    hCtx.strokeStyle = '#60a5fa';
+    hCtx.lineWidth = 1.5;
+    hCtx.strokeRect(184, 6, 170, 124);
+
+    hCtx.fillStyle = '#60a5fa';
+    hCtx.font = 'bold 11px sans-serif';
+    hCtx.fillText('△ 浅い角度 ＝ MISS計測', 194, 24);
+
+    hCtx.strokeStyle = '#38bdf8';
+    hCtx.lineWidth = 2.5;
+    hCtx.beginPath();
+    hCtx.moveTo(196, 66);
+    hCtx.lineTo(342, 66);
+    hCtx.stroke();
+
+    hCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    hCtx.setLineDash([3, 3]);
+    hCtx.beginPath();
+    hCtx.moveTo(196, 102);
+    hCtx.lineTo(342, 102);
+    hCtx.stroke();
+    hCtx.setLineDash([]);
+
+    hCtx.strokeStyle = '#94a3b8';
+    hCtx.lineWidth = 4;
+    hCtx.beginPath();
+    hCtx.moveTo(240, 86);
+    hCtx.lineTo(298, 76);
+    hCtx.stroke();
+
+    hCtx.fillStyle = '#e2e8f0';
+    hCtx.font = '10px sans-serif';
+    hCtx.fillText('総投数 N のみ増え、πが上がる！', 193, 121);
+}
+
+function getLineYAtX(x) {
+    const centerY = BASE_Y + lineOffsetY;
+    return centerY + Math.tan(lineAngle) * (x - (canvas.width / 2));
+}
+
+function shootNeedle() {
+    if (!isPlaying || isPaused || inputLocked) return;
+    initAudio();
+    playShootSound();
+
+    const speed = 10.8;
+    activeNeedles.push({
+        x: launcherX,
+        y: LAUNCHER_Y,
+        vx: Math.cos(pendulumAngle) * speed,
+        vy: Math.sin(pendulumAngle) * speed,
+        angle: pendulumAngle,
+        bounces: 0,
+        trail: []
+    });
+}
+
+window.addEventListener('keydown', (e) => {
+    keysPressed[e.code] = true;
+
+    // PCキーボード上下キーで連射レベルをクイック調整
+    if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+        e.preventDefault();
+        changeRapidLevel(1);
+    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+        e.preventDefault();
+        changeRapidLevel(-1);
+    }
+
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (e.repeat || inputLocked) return;
+
+        if (!helpModal.classList.contains('hidden')) {
+            closeHelp();
+            return;
+        }
+        if (!overlay.classList.contains('hidden')) {
+            startGame();
+            return;
+        }
+        if (isPlaying && !isPaused) {
+            if (!isAnyShootHolding()) {
+                lastRapidShotTime = performance.now();
+            }
+            isSpaceHolding = true;
+            updateHoldingVisual();
+        }
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    keysPressed[e.code] = false;
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (isSpaceHolding) {
+            isSpaceHolding = false;
+            updateHoldingVisual();
+            if (isPlaying && !isPaused && !inputLocked) {
+                shootNeedle();
+            }
+        }
+    }
+});
+
+window.addEventListener('blur', () => {
+    isSliderHolding = false;
+    isSpaceHolding = false;
+    updateHoldingVisual();
+});
+
+function updatePiBalanceSystem(estimatedPi) {
+    if (hitCount === 0) {
+        currentMultiplier = 1.0;
+        multEl.textContent = '×1.0';
+        piCursor.style.left = '95%';
+        piMeterBox.classList.remove('fever');
+        return;
+    }
+
+    const diff = estimatedPi - TARGET_PI;
+    const absDiff = Math.abs(diff);
+    const percent = Math.max(4, Math.min(96, 50 + (diff / 1.75) * 50));
+    piCursor.style.left = `${percent}%`;
+
+    if (absDiff <= 0.05) {
+        currentMultiplier = 3.0;
+        piMeterBox.classList.add('fever');
+    } else if (absDiff <= 0.15) {
+        currentMultiplier = 2.0;
+        piMeterBox.classList.add('fever');
+    } else if (diff < 0) {
+        currentMultiplier = (absDiff > 1.0) ? 0.5 : 0.8;
+        piMeterBox.classList.remove('fever');
+    } else {
+        currentMultiplier = 0.8;
+        piMeterBox.classList.remove('fever');
+    }
+
+    multEl.textContent = `×${currentMultiplier.toFixed(1)}`;
+}
+
+function spawnBounceSpark(x, y) {
+    playBounceSound();
+    for (let i = 0; i < 10; i++) {
+        const angle = (Math.random() - 0.5) * Math.PI;
+        const dir = x < canvas.width / 2 ? 1 : -1;
+        const speed = 1.8 + Math.random() * 2.2;
+        particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed * dir,
+            vy: Math.sin(angle) * speed - 1,
+            hue: 195 + Math.random() * 40,
+            alpha: 1,
+            size: 2.2,
+            decay: 0.045
+        });
+    }
+}
+
+function spawnCircleFirework(x, y, baseHue) {
+    playBoomSound();
+    const count = 44;
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const speed = 2.5 + Math.random() * 1.5;
+        particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            hue: (baseHue + i * 8) % 360,
+            alpha: 1,
+            size: 2.4 + Math.random() * 1.3,
+            decay: 0.023 + Math.random() * 0.01
+        });
+    }
+}
+
+function update(now) {
+    if (isPaused) {
+        lastFrameTime = now;
+        return;
+    }
+
+    const dt = (now - lastFrameTime) / 1000;
+    lastFrameTime = now;
+    time += 0.03;
+
+    const minX = 26;
+    const maxX = canvas.width - 26;
+    if (keysPressed['ArrowLeft'] || keysPressed['KeyA']) {
+        const nextX = Math.max(minX, launcherX - launcherSpeed);
+        syncLauncherAndSliderUI((nextX - minX) / (maxX - minX));
+    }
+    if (keysPressed['ArrowRight'] || keysPressed['KeyD']) {
+        const nextX = Math.min(maxX, launcherX + launcherSpeed);
+        syncLauncherAndSliderUI((nextX - minX) / (maxX - minX));
+    }
+
+    if (isPlaying && isAnyShootHolding() && rapidLevel > 0) {
+        const interval = getRapidIntervalMs();
+        if (now - lastRapidShotTime >= interval) {
+            shootNeedle();
+            lastRapidShotTime = now;
+        }
+    }
+
+    if (isPlaying) {
+        if (gameMode === 'time') {
+            gameTimer -= dt;
+            if (gameTimer <= 0) {
+                gameTimer = 0;
+                timerEl.textContent = '0.0';
+                endGame('TIME UP!');
+                return;
+            } else {
+                timerEl.textContent = gameTimer.toFixed(1);
+            }
+        } else {
+            gameTimer += dt;
+            timerEl.textContent = gameTimer.toFixed(2);
+        }
+    }
+
+    lineOffsetY = Math.sin(time * 1.3) * 95;
+    lineAngle = Math.sin(time * 0.95) * (Math.PI / 7.2);
+    pendulumAngle = (-Math.PI / 2) + Math.sin(time * 2.5) * (Math.PI / 2.4);
+
+    if (rainbowFlashTimer > 0) rainbowFlashTimer--;
+    if (leftWallFlash > 0) leftWallFlash--;
+    if (rightWallFlash > 0) rightWallFlash--;
+
+    for (let i = stuckNeedles.length - 1; i >= 0; i--) {
+        const sn = stuckNeedles[i];
+        if (sn.removing) {
+            sn.alpha -= 0.08;
+            if (sn.alpha <= 0) stuckNeedles.splice(i, 1);
+        } else if (sn.pulse > 0) {
+            sn.pulse -= 0.06;
+        }
+    }
+
+    if (isPlaying) {
+        for (let i = activeNeedles.length - 1; i >= 0; i--) {
+            const n = activeNeedles[i];
+            n.trail.push({ x: n.x, y: n.y });
+            if (n.trail.length > 8) n.trail.shift();
+
+            n.x += n.vx;
+            n.y += n.vy;
+
+            if (n.x <= WALL_MARGIN) {
+                n.x = WALL_MARGIN + (WALL_MARGIN - n.x);
+                n.vx = Math.abs(n.vx);
+                n.angle = Math.atan2(n.vy, n.vx);
+                n.bounces++;
+                leftWallFlash = 14;
+                spawnBounceSpark(WALL_MARGIN, n.y);
+            } else if (n.x >= canvas.width - WALL_MARGIN) {
+                n.x = (canvas.width - WALL_MARGIN) - (n.x - (canvas.width - WALL_MARGIN));
+                n.vx = -Math.abs(n.vx);
+                n.angle = Math.atan2(n.vy, n.vx);
+                n.bounces++;
+                rightWallFlash = 14;
+                spawnBounceSpark(canvas.width - WALL_MARGIN, n.y);
+            }
+
+            const targetLineY = getLineYAtX(n.x);
+
+            if (n.y <= targetLineY) {
+                n.y = targetLineY;
+
+                const relativeAngle = Math.abs(n.angle - lineAngle);
+                const sinVal = Math.abs(Math.sin(relativeAngle));
+                const distFromCenter = Math.abs(n.x - (canvas.width / 2));
+                const isIntersecting = (sinVal >= 0.70) && (distFromCenter < 165);
+
+                const prevPi = hitCount > 0 ? (2 * NEEDLE_LENGTH * totalCount) / (LINE_INTERVAL * hitCount) : 0;
+                totalCount++;
+
+                if (isIntersecting) {
+                    hitCount++;
+                    combo++;
+                    rainbowFlashTimer = 22;
+                    playRocketSound(combo, currentMultiplier);
+
+                    const hitHue = (time * 180) % 360;
+
+                    stuckNeedles.push({
+                        x: n.x,
+                        relativeAngle: n.angle - lineAngle,
+                        hue: hitHue,
+                        isBank: n.bounces > 0,
+                        alpha: 1.0,
+                        pulse: 1.0,
+                        removing: false
+                    });
+
+                    const activeStuck = stuckNeedles.filter(s => !s.removing);
+                    if (activeStuck.length > MAX_STUCK_NEEDLES) {
+                        activeStuck[0].removing = true;
+                    }
+
+                    const bankBonus = n.bounces > 0 ? n.bounces * 100 : 0;
+                    const basePts = 100 + Math.round(sinVal * 100) + (combo - 1) * 50 + bankBonus;
+                    const earned = Math.round(basePts * currentMultiplier);
+                    score += earned;
+
+                    floatingTexts.push({
+                        x: n.x,
+                        y: n.y + 22,
+                        text: n.bounces > 0 ? `BANK HIT! +${earned}` : `+${earned}`,
+                        color: n.bounces > 0 ? '#f472b6' : (currentMultiplier >= 2.0 ? '#fbbf24' : '#34d399'),
+                        alpha: 1.0
+                    });
+
+                    slashPopups.push({
+                        scoreText: `+${earned}`,
+                        multText: `×${currentMultiplier.toFixed(1)}倍`,
+                        y: Math.max(95, Math.min(canvas.height - 110, n.y)),
+                        slideX: 90,
+                        alpha: 1.0,
+                        life: 55,
+                        isFever: currentMultiplier >= 2.0 || n.bounces > 0
+                    });
+
+                    const extendDirX = Math.cos(n.angle);
+                    const extendDirY = Math.sin(n.angle);
+
+                    rockets.push({
+                        startX: n.x,
+                        startY: n.y,
+                        dirX: extendDirX,
+                        dirY: extendDirY,
+                        length: NEEDLE_LENGTH,
+                        maxLength: NEEDLE_LENGTH + 115,
+                        speed: 12.5,
+                        phase: 'extending',
+                        circleRadius: 0,
+                        maxRadius: 48,
+                        hue: hitHue,
+                        alpha: 1
+                    });
+                } else {
+                    combo = 0;
+                    if (hitCount > 0 && prevPi < 3.05) {
+                        score += 50;
+                        playAdjustSound();
+                        floatingTexts.push({
+                            x: n.x,
+                            y: n.y + 18,
+                            text: 'ADJUST +50',
+                            color: '#60a5fa',
+                            alpha: 1.0
+                        });
+                    } else {
+                        playMissSound();
+                        floatingTexts.push({
+                            x: n.x,
+                            y: n.y + 16,
+                            text: 'MISS',
+                            color: '#94a3b8',
+                            alpha: 0.9
+                        });
+                    }
+                }
+
+                totalEl.textContent = totalCount;
+                hitEl.textContent = hitCount;
+                scoreEl.textContent = score.toLocaleString();
+
+                const estimatedPi = hitCount > 0 ? (2 * NEEDLE_LENGTH * totalCount) / (LINE_INTERVAL * hitCount) : 0;
+                piEl.textContent = hitCount > 0 ? estimatedPi.toFixed(4) : '∞';
+                updatePiBalanceSystem(estimatedPi);
+
+                activeNeedles.splice(i, 1);
+
+                if (gameMode === 'pi' && totalCount >= 5 && hitCount > 0) {
+                    if (Math.abs(estimatedPi - TARGET_PI) <= 0.04) {
+                        endGame('🎉 気合い推定π (3.14159) 達成！');
+                        break;
+                    }
+                }
+            } else if (n.y < -40) {
+                activeNeedles.splice(i, 1);
+            }
+        }
+    }
+
+    for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        if (r.phase === 'extending') {
+            r.length += r.speed;
+            const tipX = r.startX + r.dirX * (r.length / 2);
+            const tipY = r.startY + r.dirY * (r.length / 2);
+
+            particles.push({
+                x: tipX + (Math.random() - 0.5) * 4,
+                y: tipY + (Math.random() - 0.5) * 4,
+                vx: -r.dirX * 2 + (Math.random() - 0.5),
+                vy: -r.dirY * 2 + (Math.random() - 0.5),
+                hue: (r.hue + 40) % 360,
+                alpha: 0.9,
+                size: 2,
+                decay: 0.04
+            });
+
+            if (r.length >= r.maxLength) {
+                r.phase = 'exploding';
+                spawnCircleFirework(tipX, tipY, r.hue);
+            }
+        } else if (r.phase === 'exploding') {
+            r.circleRadius += (r.maxRadius - r.circleRadius) * 0.16;
+            r.alpha -= 0.028;
+            if (r.alpha <= 0) rockets.splice(i, 1);
+        }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) particles.splice(i, 1);
+    }
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += 0.8;
+        ft.alpha -= 0.022;
+        if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+    }
+
+    for (let i = slashPopups.length - 1; i >= 0; i--) {
+        const sp = slashPopups[i];
+        sp.slideX *= 0.72;
+        sp.y -= 0.35;
+        sp.life--;
+        if (sp.life < 18) sp.alpha = Math.max(0, sp.life / 18);
+        if (sp.life <= 0) slashPopups.splice(i, 1);
+    }
+}
+
+function getRainbowColor(progress) {
+    const hue = (progress * 360 + time * 240) % 360;
+    return `hsl(${hue}, 100%, 60%)`;
+}
+
+function draw() {
+    ctx.fillStyle = 'rgba(3, 5, 10, 0.38)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = leftWallFlash > 0 ? '#38bdf8' : 'rgba(56, 189, 248, 0.25)';
+    ctx.beginPath();
+    ctx.moveTo(WALL_MARGIN, 0);
+    ctx.lineTo(WALL_MARGIN, canvas.height);
+    ctx.stroke();
+
+    ctx.strokeStyle = rightWallFlash > 0 ? '#38bdf8' : 'rgba(56, 189, 248, 0.25)';
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - WALL_MARGIN, 0);
+    ctx.lineTo(canvas.width - WALL_MARGIN, canvas.height);
+    ctx.stroke();
+
+    const leftY = getLineYAtX(0);
+    const rightY = getLineYAtX(canvas.width);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, BASE_Y);
+    ctx.lineTo(canvas.width, BASE_Y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const relativeAngle = Math.abs(pendulumAngle - lineAngle);
+    const isAngleReady = Math.abs(Math.sin(relativeAngle)) >= 0.70;
+
+    ctx.strokeStyle = isAngleReady ? 'rgba(52, 211, 153, 0.35)' : 'rgba(148, 163, 184, 0.22)';
+    ctx.lineWidth = isAngleReady ? 2 : 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    let gx = launcherX;
+    let gy = LAUNCHER_Y;
+    let gvx = Math.cos(pendulumAngle);
+    let gvy = Math.sin(pendulumAngle);
+    ctx.moveTo(gx, gy);
+    for (let step = 0; step < 440; step += 8) {
+        gx += gvx * 8;
+        gy += gvy * 8;
+        if (gx <= WALL_MARGIN) {
+            gx = WALL_MARGIN;
+            gvx = Math.abs(gvx);
+            ctx.lineTo(gx, gy);
+        } else if (gx >= canvas.width - WALL_MARGIN) {
+            gx = canvas.width - WALL_MARGIN;
+            gvx = -Math.abs(gvx);
+            ctx.lineTo(gx, gy);
+        }
+    }
+    ctx.lineTo(gx, gy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.lineWidth = (rainbowFlashTimer > 0) ? 7 : 3.5;
+    if (rainbowFlashTimer > 0) {
+        const grad = ctx.createLinearGradient(0, leftY, canvas.width, rightY);
+        for (let i = 0; i <= 1; i += 0.2) grad.addColorStop(i, getRainbowColor(i));
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 18;
+    } else {
+        ctx.strokeStyle = currentMultiplier >= 2.0 ? '#10b981' : '#38bdf8';
+        ctx.shadowBlur = currentMultiplier >= 2.0 ? 8 : 0;
+        ctx.shadowColor = '#10b981';
+    }
+    ctx.beginPath();
+    ctx.moveTo(0, leftY);
+    ctx.lineTo(canvas.width, rightY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const r = NEEDLE_LENGTH / 2;
+    stuckNeedles.forEach(sn => {
+        const sy = getLineYAtX(sn.x);
+        const currentAngle = lineAngle + sn.relativeAngle;
+        const cosA = Math.cos(currentAngle);
+        const sinA = Math.sin(currentAngle);
+
+        const backLen = r * 0.85;
+        const frontLen = r * 1.15;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sn.alpha);
+        ctx.lineWidth = 4 + sn.pulse * 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = sn.isBank ? '#f472b6' : `hsl(${sn.hue}, 95%, 65%)`;
+        if (sn.pulse > 0) {
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 12 * sn.pulse;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(sn.x - backLen * cosA, sy - backLen * sinA);
+        ctx.lineTo(sn.x + frontLen * cosA, sy + frontLen * sinA);
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(sn.x, sy, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (sn.pulse > 0) {
+            ctx.strokeStyle = `rgba(255, 255, 255, ${sn.pulse})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(sn.x, sy, 6 + (1 - sn.pulse) * 14, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
+    });
+
+    const startX = launcherX;
+    const startY = LAUNCHER_Y;
+    const holding = isAnyShootHolding();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(16, LAUNCHER_Y + 24);
+    ctx.lineTo(canvas.width - 16, LAUNCHER_Y + 24);
+    ctx.stroke();
+
+    ctx.fillStyle = holding ? '#312e81' : '#1e293b';
+    ctx.strokeStyle = holding ? '#f472b6' : '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(startX - 24, LAUNCHER_Y + 28);
+    ctx.lineTo(startX + 24, LAUNCHER_Y + 28);
+    ctx.lineTo(startX + 18, LAUNCHER_Y + 14);
+    ctx.lineTo(startX - 18, LAUNCHER_Y + 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = isAngleReady ? '#34d399' : '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(startX - r * Math.cos(pendulumAngle), startY - r * Math.sin(pendulumAngle));
+    ctx.lineTo(startX + r * Math.cos(pendulumAngle), startY + r * Math.sin(pendulumAngle));
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(startX, startY, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    activeNeedles.forEach(n => {
+        if (n.trail.length > 1) {
+            ctx.strokeStyle = n.bounces > 0 ? 'rgba(244, 114, 182, 0.35)' : 'rgba(255, 255, 255, 0.22)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(n.trail[0].x, n.trail[0].y);
+            n.trail.forEach(pt => ctx.lineTo(pt.x, pt.y));
+            ctx.stroke();
+        }
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = n.bounces > 0 ? '#f472b6' : '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(n.x - r * Math.cos(n.angle), n.y - r * Math.sin(n.angle));
+        ctx.lineTo(n.x + r * Math.cos(n.angle), n.y + r * Math.sin(n.angle));
+        ctx.stroke();
+    });
+
+    rockets.forEach(rk => {
+        if (rk.phase === 'extending') {
+            const currentHalfLen = rk.length / 2;
+            ctx.save();
+            ctx.strokeStyle = `hsla(${rk.hue}, 100%, 75%, 0.95)`;
+            ctx.lineWidth = 5;
+            ctx.shadowColor = `hsl(${rk.hue}, 100%, 65%)`;
+            ctx.shadowBlur = 12;
+
+            ctx.beginPath();
+            ctx.moveTo(rk.startX - currentHalfLen * rk.dirX, rk.startY - currentHalfLen * rk.dirY);
+            ctx.lineTo(rk.startX + currentHalfLen * rk.dirX, rk.startY + currentHalfLen * rk.dirY);
+            ctx.stroke();
+            ctx.restore();
+        } else if (rk.phase === 'exploding') {
+            const tipX = rk.startX + rk.dirX * (rk.maxLength / 2);
+            const tipY = rk.startY + rk.dirY * (rk.maxLength / 2);
+
+            ctx.save();
+            ctx.strokeStyle = `hsla(${rk.hue}, 100%, 65%, ${rk.alpha})`;
+            ctx.lineWidth = 4 * rk.alpha;
+            ctx.shadowColor = `hsl(${rk.hue}, 100%, 60%)`;
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.arc(tipX, tipY, rk.circleRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.lineWidth = 1.5 * rk.alpha;
+            ctx.beginPath();
+            ctx.arc(tipX, tipY, rk.circleRadius * 0.65, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+    });
+
+    particles.forEach(p => {
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 65%, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    floatingTexts.forEach(ft => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = ft.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+    });
+
+    slashPopups.forEach(sp => {
+        ctx.save();
+        ctx.globalAlpha = sp.alpha;
+        const baseX = canvas.width - 12 + sp.slideX;
+        const baseY = sp.y;
+
+        ctx.fillStyle = sp.isFever ? 'rgba(244, 114, 182, 0.25)' : 'rgba(56, 189, 248, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(baseX - 125, baseY - 22);
+        ctx.lineTo(baseX + 12, baseY - 22);
+        ctx.lineTo(baseX + 12, baseY + 14);
+        ctx.lineTo(baseX - 138, baseY + 14);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = sp.isFever ? '#f472b6' : '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(baseX - 138, baseY + 14);
+        ctx.lineTo(baseX - 125, baseY - 22);
+        ctx.stroke();
+
+        ctx.textAlign = 'right';
+        ctx.font = '900 17px sans-serif';
+        ctx.fillStyle = sp.isFever ? '#fbbf24' : '#34d399';
+        ctx.fillText(`${sp.scoreText}`, baseX - 58, baseY + 2);
+
+        ctx.font = '900 15px sans-serif';
+        ctx.fillStyle = sp.isFever ? '#f472b6' : '#e2e8f0';
+        ctx.fillText(`${sp.multText}`, baseX - 2, baseY + 2);
+
+        ctx.restore();
+    });
+
+    updateAndDrawConfetti();
+
+    requestAnimationFrame((now) => {
+        update(now);
+        draw();
+    });
+}
+
+window.addEventListener('resize', () => {
+    const minX = 26;
+    const maxX = canvas.width - 26;
+    syncLauncherAndSliderUI((launcherX - minX) / (maxX - minX));
+});
+
+updateHighScoreDisplay();
+syncLauncherAndSliderUI(0.5);
+lastFrameTime = performance.now();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
