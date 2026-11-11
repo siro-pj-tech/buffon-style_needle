@@ -3,7 +3,7 @@
 数学の確率実験「ビュフォンの針（Buffon's Needle）」を魔改造した、ブラウザで遊べるハイスピード・アクションパズル＆シューティングゲームです。  
 動く目標ラインに対して針を撃ち込み、**交差率をコントロールして推定円周率（π）を `3.14159` に近づけながらハイスコアを狙います。**
 
-* **プレイURL（GitHub Pages）**: `https://siro-pj-tech.github.io/buffon-style_needle/`
+[▶ 今すぐ遊ぶ](https://siro-pj-tech.github.io/buffon-style_needle/)
 * **対応環境**: スマートフォン（縦画面最適化UI） / PCブラウザ（2カラム大画面UI・キーボード操作対応）
 * **技術構成**: 単一HTML（HTML5 Canvas + Vanilla JavaScript + Web Audio API）
 
